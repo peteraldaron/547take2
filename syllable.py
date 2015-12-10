@@ -236,4 +236,5 @@ def segmentation(wave):
     sr = wave.sr
     fft_result = [feature.fft_extract(x) for x in fileio.segment(wave.data, 256)]
     freq_at_each_step = [feature.fft_to_freq(fft_res, sr, topn=1) for fft_res in fft_result]
-    return np.hstack(freq_at_each_step)
+    amp_at_each_step = [x.real.max() for x in fft_result]
+    return amp_at_each_step, np.hstack(freq_at_each_step)

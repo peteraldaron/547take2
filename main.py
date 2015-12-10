@@ -1,5 +1,6 @@
 import numpy as np
 import scipy, fileio, feature, syllable
+from numpy import linalg
 from scipy import fftpack
 from pylab import *
 
@@ -22,6 +23,8 @@ def single_wav_analysis():
     for file in audiofiles:
         print(feature.dct2(file[0].data, sr, topn=3))
         title(file[1])
-        plot(syllable.segmentation(file[0]))
+        amp, freq = syllable.segmentation(file[0])
+        plot(amp/linalg.norm(amp))
+        plot(freq/linalg.norm(freq))
         show()
 single_wav_analysis()
