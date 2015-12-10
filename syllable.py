@@ -1,7 +1,7 @@
 import numpy as np, scipy
 import pandas as pd
 import math
-import fileio
+import fileio, feature
 
 '''
 implemented based on description in
@@ -229,3 +229,11 @@ def waveDivisionBySyllable(wave, word):
             'token': x[2],
             'samples':fileio.WaveData(wave.data[int(x[0]):int(x[1])], wave.sr)
         }, zip(frame_marks[:-1], frame_marks[1:], tokens)))
+
+
+#attempts to segment a given input through frequency/amplitude analysis:
+def segmentation(wave):
+    sr = wave.sr
+    fft_result = [feature.fft_extract(x) for x in fileio.segment(wave.data, 256)]
+    freq_at_each_step = [feature.fft_to_freq(fft_res, sr, topn=1) for fft_res in fft_result]
+    return np.hstack(freq_at_each_step)

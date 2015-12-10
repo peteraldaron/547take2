@@ -1,6 +1,6 @@
 import numpy as np, sys, wave, struct, os
 import soundfile as sf
-import feature
+import feature, math
 
 #doing everything in numpy
 
@@ -26,6 +26,17 @@ class Wave:
     def ifft(fft_data):
         return np.fft.ifft(fft_data).real
 
+def segment(data, length):
+        splitAt = [x*length for x in range(1,math.ceil(len(data)/length))]
+        res = np.split(data, splitAt)
+        lastPadding = length - len(res[-1])
+        if lastPadding > 0:
+            begin = math.floor(lastPadding/2)
+            end = lastPadding - begin
+            res[-1] = np.pad(res[-1], (begin, end), mode='constant',
+                    constant_values=0)
+        return res
+
 #wrapper
 class WaveData:
     def __init__(self, data, sr):
@@ -46,13 +57,8 @@ def readAudioFileWithName(directory, filename):
     return (Wave(directory+filename), name)
 
 def readAllFilesInDirectory(directory):
-    #debug:
-    #for file in os.listdir(directory):
-    #    if file.endswith(".wav"):
-    #        print(file)
-    #        readAudioFileWithName(file)
     filelist = []
-    with open("./resources/audiolist", "r") as files:
+    with open(directory+"filelist", "r") as files:
         for line in files:
             filelist.append(line[:-1]);
     return [readAudioFileWithName(directory, file) for file in filelist]
@@ -62,44 +68,3 @@ def writeWavesToFiles(waves, sr, prefix="", namelist=[]):
         namelist = list(map(lambda x : prefix+str(x), range(len(waves))))
     for i in range(len(waves)):
         sf.write(namelist[i]+".wav", waves[i], sr)
-
-def dumpFeaturesToNNFFile(filename, feature_matrix, feature_size, result_size):
-    fp = open(filename, "w")
-    print(str(feature_size)+" "+str(result_size), file=fp)
-    print(len(feature_matrix), file=fp)
-    for i in feature_matrix:
-        print(" ".join([str(x)[:10] for x in i]), file=fp)
-    fp.close()
-
-def token_to_code(tokens, mode="binary"):
-    obj = {}
-    if mode == "binary":
-        digits = int.bit_length(len(tokens))
-        i = 0
-        for token in tokens:
-            le = np.array(list(bin(i)[2:]))
-            if len(le) < digits:
-                le = np.hstack((np.zeros(digits - len(le)), le))
-            #obj[tokens[i]] = list(len(bin(i)[:2])
-            obj[token] = le.astype(np.float64)
-            i+=1
-        #print(obj)
-        return obj
-    elif mode == "decimal":
-        i = 0
-        for token in tokens:
-            obj[token] = np.array(i);
-            i+=1
-        return obj
-
-def exportToNNF(tokens, frames):
-    mode = "decimal"
-    outputlen = 1 if mode == "decimal" else int.bit_length(len(tokens))
-    token_codes = token_to_code(tokens, mode)
-    #for x in frames:
-    #    print(x[1], token_codes[x[0]])
-    aggregated_data = [np.hstack((frame, token_codes[x[0]]))
-            for x in frames for frame in x[1]]
-    dumpFeaturesToNNFFile("feature_data.txt", aggregated_data,
-            feature.FEATURE_DIM, outputlen)
-

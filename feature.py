@@ -3,12 +3,12 @@ from scipy import fftpack, signal
 #import pandas as pd
 import syllable
 
-FEATURE_DIM = 32
+FEATURE_DIM = 64
 DCT_LEN = 128
 
 #simple wrapper
 def feature_extract(samples):
-    ft=scipy.fftpack.dct(samples)
+    ft=fftpack.dct(samples *signal.hann(len(samples)))
     #normalization:
     absmax = np.absolute(ft).max()
     if absmax!=0:
@@ -19,6 +19,24 @@ def feature_extract(samples):
         #return np.absolute(ft[:FEATURE_DIM:2])
     else:
         return np.hstack((ft, np.zeros(FEATURE_DIM - len(ft))))
+
+#decompose fft into frequency:
+#returns first half
+def fft_extract(samples):
+    ft = fftpack.fft(samples * signal.hann(len(samples)))
+    realVal = ft[:len(ft)/2].real
+    return realVal
+
+def dct2(samples, sr, topn=10):
+    ft=fftpack.dct(samples *signal.hann(len(samples)))
+    temp = np.sort(ft)[-topn]
+    bins = np.where(ft >= temp)[0]
+    return bins*(sr/(len(ft)))
+
+def fft_to_freq(fft_res, sr, topn=10):
+    temp = np.sort(fft_res)[-topn]
+    bins = np.where(fft_res >= temp)[0]
+    return bins*(sr/(len(fft_res)*2))
 
 #returns a realized list
 def separate_frames(token, samples):
