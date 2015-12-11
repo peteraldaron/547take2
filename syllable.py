@@ -4,6 +4,7 @@ from numpy import linalg
 import math
 import fileio, feature
 from scipy.signal import argrelextrema
+#from pylab import *
 
 #moving average:
 def moving_average(samples, length):
@@ -70,30 +71,38 @@ def s_detection(wave, window_size=10, amp_threshold=0.7, freq_threshold=3000, le
     #normalize:
     seglen=64
     amp, freq = segmentation(wave, seglen)
+    freq = moving_average(freq, 10)
+    #plot(freq)
+    #show()
+
     windowed_amp = moving_window(amp/linalg.norm(amp), window_size)
     length = (wave.sr / seglen)*len_threshold
     candidates = np.intersect1d(np.where(freq>3000), np.where(windowed_amp < max(windowed_amp)*amp_threshold))
     continuous=np.split(candidates, np.where(np.diff(candidates)!=1)[0]+1)
-    filtered = [seg for seg in continuous if len(seg)>length]
+    filtered = [seg for seg in continuous if len(seg)>=length]
     #location: 3 state: 0, 1, 2
     location = -1 
+    centralFramePercent = -1
     if len(filtered) > 0:
         longest = filtered[0];
         for seq in filtered:
             if len(seq) > len(longest):
                 longest = seq
-        centralFrame = longest[len(longest)/2]
-        if centralFrame <=len(amp)/3:
+        #centralFrame = longest[len(longest)/2]
+        #use 1st frame?
+        centralFrame = longest[0]
+        centralFramePercent = centralFrame/len(amp)
+        if centralFramePercent < 0.3:
             location = 0
-        elif centralFrame <2*len(amp)/3 and centralFrame >= len(amp)/3:
+        elif centralFramePercent <=0.75:
             location = 1
         else:
             location = 2
-    return filtered, location, windowed_amp, freq 
+    return filtered, location, centralFramePercent, windowed_amp, freq 
 
 
 def guess_syllables(wave, window_size=10):
-    amp, freq = segmentation(wave)
+    amp, _ = segmentation(wave)
     windowed_amp = moving_window(amp/linalg.norm(amp), window_size)
     maximi = local_max_locations(windowed_amp)
     return len(maximi[0])
