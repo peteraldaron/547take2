@@ -3,10 +3,13 @@ import scipy, fileio, feature, syllable
 from numpy import linalg
 from scipy import fftpack
 from pylab import *
+from feature import *
+from syllable import *
 
 TEST_DIR = "./audio/testdata/"
 WORD_DIR = "./audio/"
 SYLLABLE_DIR = "./audio/syllables/"
+BLIND_DIR = "./audio/blinddata/"
 
 vocab = set([
 "suomi",
@@ -51,18 +54,21 @@ for i in range(max(map(lambda l :l, vocab_syllables.values()))):
 for i in vocab:
     syllables_to_vocab[vocab_syllables[i]] = i
 
-def guess_syllables(wave, window_size=10):
-    amp, freq = syllable.segmentation(wave)
-    windowed_amp = syllable.moving_window(amp/linalg.norm(amp), window_size)
-    maximi = syllable.local_max_locations(windowed_amp)
-    return len(maximi[0])
-
 def syllable_debug_test():
-    audiofiles = fileio.readAllFilesInDirectory("./audio/testdata/")
+    audiofiles = fileio.readAllFilesInDirectory(WORD_DIR)
     sr = audiofiles[0][0].sr
     for file in audiofiles:
         print(file[1]+" guess: "+str(guess_syllables(file[0])))
         print(file[1]+ " actual: "+str(vocab_syllables[file[1]]))
+        kk, am, fr = syllable.kk_detection(file[0], window_size=40)
+        s, sloc, _,_ = syllable.s_detection(file[0], window_size=40)
+        print("kk: ", kk)
+        print("s: ", s, sloc)
+        print()
+        title(file[1])
+        plot(am, label="amp")
+        plot(fr, label="fre")
+        show()
 
 def single_wav_analysis():
     audiofiles = fileio.readAllFilesInDirectory("./audio/")
@@ -84,4 +90,10 @@ def single_wav_analysis():
         #avgfreq = np.mean(freq)
         #plot(np.repeat(avgfreq, len(freq)))
 #single_wav_analysis()
-syllable_debug_test()
+#syllable_debug_test()
+def testing():
+    audiofiles = fileio.readAllFilesInDirectory(BLIND_DIR)
+    for file in audiofiles:
+        candidates = feature.partial_logic_1(file[0])
+        print(candidates)
+testing()
