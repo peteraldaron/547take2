@@ -1,7 +1,7 @@
-import numpy as np, scipy
+import numpy as np
 from scipy import fftpack, signal
 #import pandas as pd
-import syllable
+import syllable, fileio
 
 FEATURE_DIM = 64
 DCT_LEN = 128
@@ -20,24 +20,49 @@ def feature_extract(samples):
     else:
         return np.hstack((ft, np.zeros(FEATURE_DIM - len(ft))))
 
+def normalize(vector):
+    c=vector/np.linalg.norm(vector)
+    return c/c.max()
+
+def interpolate_wave(segment, inter_length):
+    return signal.resample(segment, inter_length)
+
+def align_peaks(sample, alignment_target, num_peaks):
+    #doing a very direct and coarse alignment:
+    sample_partitions = np.split(sample, sample.argsort()[-num_peaks:].sort())
+    chunk_len = []
+    topnpeak_t = alignment_target.argsort()[-num_peaks:].sort()
+    for i in range(1, len(topnpeak_t)):
+        chunk_len.append(topnpeak_t[i]-topnpeak_t[i-1])
+    new_samples = [interpolate_wave(seg[0], seg[1]) for seg in zip(sample_partitions, chunk_len)]
+    return np.hstack(new_samples)
 #decompose fft into frequency:
 #returns first half
-def fft_extract(samples):
-    ft = fftpack.fft(samples * signal.hann(len(samples)))
+def fft_extract(samples, wf=signal.hann):
+    ft = fftpack.fft(samples * wf(len(samples)))
     realVal = ft[:len(ft)/2].real
     return realVal
 
-def dct2(samples, sr, topn=10):
-    ft=fftpack.dct(samples *signal.hann(len(samples)))
-    temp = np.sort(ft)[-topn]
-    bins = np.where(ft >= temp)[0]
-    return bins*(sr/(len(ft)))
-
-def abstract_cartoon(wave, window_size=64, window_type=signal.hann):
-#whole wave analysis using a set dct window
-#TODO: resample the "cartoon" to a certain length and find trend.
-    sr = wave.sr
-    ft = fftpack.dct(wave.data * window_type(len(wave.data)))
+def abstract_cartoon(wave,
+                     window_size=64,
+                     resample_size=32768,
+                     window_func=signal.hann,
+                     norm=True):
+    #whole wave analysis using a set transform window
+    #TODO: resample the "cartoon" to a certain length and find trend.
+    #resample wave to a set length
+    resampled_wave = signal.resample(wave.data, resample_size)
+    #segmentation:
+    segments = fileio.segment(resampled_wave, window_size)
+    transformed_segments = [fft_extract(seg, window_func).max() for seg in segments]
+    #ft = fftpack.dct(wave.data * window_type(len(wave.data)))
+    #window this?
+    transformed_segments = syllable.moving_window(transformed_segments, window_size, window_func)
+    if norm:
+        transformed_segments = normalize(transformed_segments)
+    #1st derivative for trend detection:
+    #return np.diff(transformed_segments)
+    return transformed_segments
 
 def fft_to_freq(fft_res, sr, topn=10):
     temp = np.sort(fft_res)[-topn]
@@ -99,3 +124,5 @@ def partial_logic_1(wave):
             "pohjoinen"]
     return candidates
 
+def partial_logic_2(candidates, sperc, kk, wave):
+    pass

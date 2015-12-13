@@ -18,12 +18,6 @@ def moving_window(samples, length, windowFunc=signal.windows.hann):
     
 def local_max_locations(sample):
     #note: discrete...can't do zeros
-    '''
-    first_order = np.diff(sample)
-    second_order = np.diff(sample, n=2)
-    #where second order is negative
-    return np.intersect1d(np.where(first_order==0), np.where(second_order < 0))
-    '''
     return argrelextrema(sample, np.greater)
 
 def top_n_local_max_locations(sample, n=5):
@@ -106,6 +100,3 @@ def guess_syllables(wave, window_size=10):
     windowed_amp = moving_window(amp/linalg.norm(amp), window_size)
     maximi = local_max_locations(windowed_amp)
     return len(maximi[0])
-
-def possible_existence_of_consonants(wave, window_size=10):
-    pass

@@ -93,7 +93,19 @@ def single_wav_analysis():
 #syllable_debug_test()
 def testing():
     audiofiles = fileio.readAllFilesInDirectory(BLIND_DIR)
+    e = None;
     for file in audiofiles:
-        candidates = feature.partial_logic_1(file[0])
-        print(candidates)
+        #candidates = feature.partial_logic_1(file[0])
+        #print(candidates)
+        if e is None:
+            e = feature.abstract_cartoon(file[0])
+            #plot(e)
+        else:
+            f = feature.abstract_cartoon(file[0])
+            #plot(f)
+            e+=f
+        #print(feature.abstract_cartoon(file[0]))
+    plot(feature.abstract_cartoon(fileio.Wave("test.wav").data))
+    plot(feature.normalize(e))
+    show()
 testing()
