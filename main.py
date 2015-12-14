@@ -2,74 +2,13 @@ import numpy as np
 import scipy, fileio, feature, syllable
 from numpy import linalg
 from scipy import fftpack
-from pylab import *
-from feature import *
-from syllable import *
+#from pylab import *
 
-TEST_DIR = "./audio/testdata/"
+SAMPLES_DIR = "./audio/samples/"
 WORD_DIR = "./audio/"
 SYLLABLE_DIR = "./audio/syllables/"
 BLIND_DIR = "./audio/blinddata/"
-
-vocab = set([
-"suomi",
-"synnyinmaa",
-"sana",
-"kultainen",
-"laaksoa",
-"kukkulaa",
-"ei",
-"rantaa",
-"rakkaampaa",
-"kuin",
-"kotimaa",
-"pohjoinen",
-"maa",
-"kallis",
-"isien"
- ])
-
-vocab_syllables = { 
-"ei":1,
-"isien":4,
-"kallis":4,
-"kotimaa":4,
-"kuin":3,
-"kukkulaa":4,
-"kultainen":6,
-"laaksoa":5,
-"maa":2,
-"pohjoinen":6,
-"rakkaampaa":6,
-"rantaa":4,
-"sana":2,
-"suomi":3,
-"synnyinmaa":7,
-}
-
-syllables_to_vocab ={}
-for i in range(max(map(lambda l :l, vocab_syllables.values()))):
-    syllables_to_vocab[i] = []
-
-for i in vocab:
-    syllables_to_vocab[vocab_syllables[i]] = i
-
-def syllable_debug_test():
-    audiofiles = fileio.readAllFilesInDirectory(WORD_DIR)
-    sr = audiofiles[0][0].sr
-    for file in audiofiles:
-        print(file[1]+" guess: "+str(guess_syllables(file[0])))
-        print(file[1]+ " actual: "+str(vocab_syllables[file[1]]))
-        kk, am, fr = syllable.kk_detection(file[0], window_size=40)
-        s, sloc, _,_ = syllable.s_detection(file[0], window_size=40)
-        print("kk: ", kk)
-        print("s: ", s, sloc)
-        print()
-        title(file[1])
-        plot(am, label="amp")
-        plot(fr, label="fre")
-        show()
-
+'''
 def single_wav_analysis():
     audiofiles = fileio.readAllFilesInDirectory("./audio/")
     sr = audiofiles[0][0].sr
@@ -105,7 +44,18 @@ def testing():
             #plot(f)
             e+=f
         #print(feature.abstract_cartoon(file[0]))
-    plot(feature.abstract_cartoon(fileio.Wave("test.wav").data))
-    plot(feature.normalize(e))
+    test = feature.abstract_cartoon(fileio.Wave("test.wav").data)
+    e = feature.normalize(e)
+    test = feature.align_peaks(test, e, 2)
+    plot(e)
+    plot(test)
     show()
-testing()
+'''
+#testing()
+def pipeline(sampleData=None, sampleFreq=None):
+    if sampleData is None:
+        sampleData=fileio.populateSampleData(SAMPLES_DIR)
+    audiofile = fileio.Wave("test.wav")
+    candidates = feature.partial_logic_1(audiofile)
+    #print(candidates)
+    feature.partial_logic_2(candidates, audiofile, sampleData, sampleFreq)

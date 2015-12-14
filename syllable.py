@@ -3,8 +3,52 @@ from scipy import signal
 from numpy import linalg
 import math
 import fileio, feature
+from pylab import *
 from scipy.signal import argrelextrema
 #from pylab import *
+
+vocab = set([
+"suomi",
+"synnyinmaa",
+"sana",
+"kultainen",
+"laaksoa",
+"kukkulaa",
+"ei",
+"rantaa",
+"rakkaampaa",
+"kuin",
+"kotimaa",
+"pohjoinen",
+"maa",
+"kallis",
+"isien"
+ ])
+
+vocab_syllables = { 
+"ei":1,
+"isien":3,
+"kallis":3,
+"kotimaa":3,
+"kuin":3,
+"kukkulaa":3,
+"kultainen":3,
+"laaksoa":2,
+"maa":1,
+"pohjoinen":3,
+"rakkaampaa":3,
+"rantaa":2,
+"sana":2,
+"suomi":3,
+"synnyinmaa":3,
+}
+syllables_to_vocab ={}
+for i in range(max(map(lambda l :l, vocab_syllables.values()))):
+    syllables_to_vocab[i] = []
+
+for i in vocab:
+    syllables_to_vocab[vocab_syllables[i]] = i
+#################################################################
 
 #moving average:
 def moving_average(samples, length):
@@ -56,7 +100,8 @@ def kk_detection(wave, window_size=10, amp_threshold=0.03, freq_threshold=0.7, l
     continuous=np.split(intersection, np.where(np.diff(intersection)!=1)[0]+1)
     
     length = (wave.sr / seglen)*len_threshold
-    return (any(map(lambda segment:len(segment) > length, continuous)),
+    containsKK=any(list(map(lambda segment:segment.size >= length, continuous)))
+    return (containsKK,
             windowed_amp,
             windowed_freq)
 
@@ -82,9 +127,9 @@ def s_detection(wave, window_size=10, amp_threshold=0.7, freq_threshold=3000, le
         for seq in filtered:
             if len(seq) > len(longest):
                 longest = seq
-        #centralFrame = longest[len(longest)/2]
+        centralFrame = longest[len(longest)/2]
         #use 1st frame?
-        centralFrame = longest[0]
+        #centralFrame = longest[0]
         centralFramePercent = centralFrame/len(amp)
         if centralFramePercent < 0.3:
             location = 0
@@ -95,8 +140,10 @@ def s_detection(wave, window_size=10, amp_threshold=0.7, freq_threshold=3000, le
     return filtered, location, centralFramePercent, windowed_amp, freq 
 
 
-def guess_syllables(wave, window_size=10):
+def guess_syllables(wave, window_size=10, len_threshold=0.01):
     amp, _ = segmentation(wave)
-    windowed_amp = moving_window(amp/linalg.norm(amp), window_size)
-    maximi = local_max_locations(windowed_amp)
+    windowed_amp = feature.normalize(moving_window(amp, window_size))
+    maximi=signal.argrelmax(windowed_amp, order=7)
+    #plot(windowed_amp)
+    #show()
     return len(maximi[0])
