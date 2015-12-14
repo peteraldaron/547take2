@@ -2,7 +2,7 @@ import numpy as np
 import scipy, fileio, feature, syllable
 from numpy import linalg
 from scipy import fftpack
-#from pylab import *
+from pylab import *
 
 SAMPLES_DIR = "./audio/samples/"
 WORD_DIR = "./audio/"
@@ -59,3 +59,15 @@ def pipeline(sampleData=None, sampleFreq=None):
     candidates = feature.partial_logic_1(audiofile)
     #print(candidates)
     feature.partial_logic_2(candidates, audiofile, sampleData, sampleFreq)
+
+#plotting aux:
+def plotstuff(filename):
+    a=fileio.Wave("audio/samples/"+filename+".wav")
+    am, fr = syllable.segmentation(a)
+    title(filename)
+    plot(feature.normalize(syllable.moving_window(am, 10)), label="amp")
+    #plot(feature.normalize(syllable.moving_window(fr, 10)), label="freq")
+    #plot(feature.normalize(am), label="amp")
+    #plot(feature.normalize(fr), label="freq")
+    legend(framealpha=0.5);
+    show()
