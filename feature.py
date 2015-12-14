@@ -155,6 +155,7 @@ def partial_logic_1(wave):
     else:
         candidates = [
             "kultainen",
+            "rantaa",
             "kotimaa",
             "pohjoinen"]
     return candidates
