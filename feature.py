@@ -35,8 +35,9 @@ def diff(vec1, vec2, d1=False, debugflag=""):
     protection = min(vec1.size, vec2.size)
     if debugflag!="":
         title(debugflag)
-        plot(vec1)
-        plot(vec2)
+        plot(vec1, label="local")
+        plot(vec2, label="candidate")
+        legend()
         show()
     return np.add.reduce((vec1[:protection]-vec2[:protection])**2)
 

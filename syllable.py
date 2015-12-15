@@ -116,11 +116,11 @@ def s_detection(wave, window_size=10, amp_threshold=0.7, freq_threshold=3000, le
 
     windowed_amp = moving_window(amp/linalg.norm(amp), window_size)
     length = (wave.sr / seglen)*len_threshold
-    candidates = np.intersect1d(np.where(freq>3000), np.where(windowed_amp < max(windowed_amp)*amp_threshold))
+    candidates = np.intersect1d(np.where(freq>2700), np.where(windowed_amp < max(windowed_amp)*amp_threshold))
     continuous=np.split(candidates, np.where(np.diff(candidates)!=1)[0]+1)
     filtered = [seg for seg in continuous if len(seg)>=length]
     #location: 3 state: 0, 1, 2
-    location = -1 
+    location = -1
     centralFramePercent = -1
     if len(filtered) > 0:
         longest = filtered[0];
